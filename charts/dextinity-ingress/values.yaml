@@ -1,0 +1,56 @@
+# Default values for dextinity-ingress.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+annotations:
+  cert-manager.io/cluster-issuer: "letsencrypt"
+  nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+
+# Scale-to-zero support via Sablier (https://sablierapp.dev): renders a
+# Traefik middleware that starts the deployments of the configured Sablier
+# group on demand and attaches it to all ingresses of this chart. If the
+# annotations above already contain traefik.ingress.kubernetes.io/router.middlewares,
+# the zero-scaling middleware is appended to the existing list. Requires a
+# Sablier instance and the Sablier Traefik plugin in the cluster.
+zeroScaling:
+  enabled: false
+  # URL of the central Sablier instance
+  sablierUrl: "http://sablier-networking.networking:10000"
+  # Sablier group to start; defaults to the release namespace, so all workloads
+  # in the namespace labeled with sablier.group=<namespace> wake up together
+  group: ""
+  # How long the group stays up after the last request
+  sessionDuration: "30m"
+  # Pass requests through to the backend when Sablier is unreachable instead
+  # of failing the request
+  failOpen: true
+  # Requests whose User-Agent matches any of these Go regexps are passed
+  # through without starting or extending a session (e.g. uptime checks)
+  ignoreUserAgent: []
+  dynamic:
+    # Title of the waiting page shown while the group starts;
+    # defaults to the release name
+    displayName: ""
+# Example Ingress configuration:
+# ingresses:
+#   - hostname: admin.dextinity.com
+#     service:
+#       name: dextinity-oauth2-proxy
+#       port:
+#         number: 3000
+#     # Set tls: false to disable TLS and serve over HTTP only (defaults to true)
+#     # tls: false
+#   - hostname: preview.dextinity.com
+#     service:
+#       name: dextinity-oauth2-proxy-preview
+#       port:
+#         number: 3000
+#   - hostname: ["site.dextinity.com"]
+#     service:
+#       name: dextinity-site
+#       port:
+#         number: 3000
+#   # Ingress without a http section (e.g. for TLS certificate provisioning only):
+#   - hostname: cert-only.dextinity.com
+#     # service is omitted — no http sections are rendered
+#     # TLS is still enabled; secretName defaults to <fullname>-<index>-cert
